@@ -1,0 +1,48 @@
+Domain,Tabcat,Tab,Practical Content,Pics,Links
+Auduino ,Light Emitting Diode - LED,Interfacing LED with Arduino,"1. Identify the longer leg (anode) and shorter leg (cathode) of the LED.
+2. Connect the LED and a resistor on the breadboard.
+3. Connect them to the Arduino.
+4. Write a simple program to make the LED blink.
+5. Change the delay time to see how fast it blinks!",,
+Auduino ,Light Emitting Diode - LED,Interfacing Multiple LEDs with Arduino,"1. Connect 2 or more LEDs to the Arduino.
+2. Write code to blink them one by one or together.
+3. Try making fun patterns like a traffic light or running lights.
+4. Learn how to control multiple lights at the same time!",,
+Auduino ,Button,Button Interfacing with Arduino,"1. Connect a push button to the Arduino.
+2. Learn how the button sends ""pressed"" (HIGH) or ""not pressed"" (LOW) signals.
+3. Write code to check if the button is pressed.
+4. See the button's status on your computer screen!",,https://www.tinkercad.com/things/9Qrg0005zZ9-lcd-class
+Auduino ,LED Button,LED Control Using Push Button,"1. Connect both an LED and a push button to the Arduino.
+2. Write a program to turn the LED ON when you press the button.
+3. Make the LED turn OFF when you let go.
+4. Try making the button act like a switch to turn the LED on and off!",,
+Auduino ,Project - LED Button,Four LEDs Controlled by Two Buttons,"1. Connect 4 LEDs and 2 push buttons.
+2. Program one button to make the lights move forward.
+3. Program the other button to make them move backward.
+4. Have fun creating different light patterns!",,
+Auduino ,Buzzer,Piezoelectric Buzzer Interfacing with Arduino,"1. Connect a small speaker (buzzer) to the Arduino.
+2. Write code to make it play sounds.
+3. Change the numbers in the code to hear different pitches (high or low sounds).
+4. Try making it play a simple song or a warning beep!",,https://www.tinkercad.com/things/9Qrg0005zZ9-lcd-class
+Auduino ,Liquid Crystal Display - LCD,LCD Interfacing with Arduino,"1. Connect a small screen (LCD) to the Arduino.
+2. Learn how to adjust the screen brightness.
+3. Write code to display your name or a fun message on the screen.
+4. See how screens show information!",,
+Auduino ,Project LCD-Buzzer-Buttons,LCD–Buzzer–Button Integrated Project,"1. Connect an LCD screen, a buzzer, and 2 buttons.
+2. Use one button to make the sound higher and the other to make it lower.
+3. Show the sound level on the screen.
+4. Combine everything you've learned into one cool project!",,
+Robo Car,RoboCar Fundamentals,Introduction to RoboCar Components,"1. Look at all the parts for your RoboCar (motors, wheels, battery, etc.).
+2. Learn what each part does.
+3. Understand how the ""brain"" (Arduino) tells the wheels to move using a special helper (motor driver).",,
+Robo Car,DC Motor,Understanding DC Motor Direction Control,"1. Learn how a motor spins forward and backward.
+2. Change the wires to see the motor spin in the opposite direction.
+3. Understand how the Arduino sends signals to change the spin direction.",,https://www.tinkercad.com/things/9Qrg0005zZ9-lcd-class
+Robo Car,Motor Driver,Interfacing Two DC Motors with L293D,"1. Connect two motors to the motor driver helper.
+2. Test the left motor and the right motor.
+3. Test both motors at the same time.
+4. Learn how to control two wheels for your RoboCar!",,
+Robo Car,Basic RoboCar Movement,Basic RoboCar Movement: Forward and Backward,"1. Attach the motors and wheels to the RoboCar body.
+2. Write a program to make the car move forward and backward.
+3. Make sure both wheels spin the right way so the car goes straight.
+4. Watch your RoboCar drive!",,

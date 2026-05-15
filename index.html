@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIoT Learning Explorer — Interactive Knowledge Tree</title>
+  <meta name="description" content="Interactive AIoT learning dashboard with Arduino, RoboCar and IoT topics">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    /* ── Light Mode (Default) ── */
+    :root {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --surface2: #f7f8fa;
+      --surface3: #edf0f4;
+      --border: rgba(30, 60, 110, 0.12);
+      --border-bright: rgba(49, 130, 206, 0.35);
+      --accent-blue: #3182ce;
+      --accent-cyan: #0d9488;
+      --accent-green: #38a169;
+      --accent-amber: #dd6b20;
+      --accent-pink: #d53f8c;
+      --accent-purple: #805ad5;
+      --text-primary: #1a202c;
+      --text-secondary: #4a5568;
+      --text-muted: #a0aec0;
+      --node-arduino: #3182ce;
+      --node-robocar: #38a169;
+      --node-aiot: #805ad5;
+      --glow-blue: 0 0 15px rgba(49, 130, 206, 0.15);
+      --glow-green: 0 0 15px rgba(56, 161, 105, 0.15);
+      --glow-purple: 0 0 15px rgba(128, 90, 213, 0.15);
+      --particle-opacity: 0.12;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --logo-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* ── Dark Mode ── */
+    [data-theme="dark"] {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --surface2: #1a2235;
+      --surface3: #222d42;
+      --border: rgba(99, 179, 237, 0.15);
+      --border-bright: rgba(99, 179, 237, 0.4);
+      --accent-blue: #63b3ed;
+      --accent-cyan: #4fd1c5;
+      --accent-green: #68d391;
+      --accent-amber: #f6ad55;
+      --accent-pink: #f687b3;
+      --accent-purple: #b794f4;
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-muted: #4a5568;
+      --node-arduino: #63b3ed;
+      --node-robocar: #68d391;
+      --node-aiot: #b794f4;
+      --glow-blue: 0 0 20px rgba(99, 179, 237, 0.3);
+      --glow-green: 0 0 20px rgba(104, 211, 145, 0.3);
+      --glow-purple: 0 0 20px rgba(183, 148, 244, 0.3);
+      --particle-opacity: 0.3;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --logo-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background 0.4s, color 0.4s;
+    }
+
+    /* Particle canvas */
+    #particleCanvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Animated grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.5;
+      animation: gridShift 20s linear infinite;
+    }
+
+    @keyframes gridShift {
+      to {
+        background-position: 40px 40px;
+      }
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--border-bright);
+      transform: scale(1.05);
+      box-shadow: var(--shadow);
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 2.5rem 0 2rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 3rem;
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mobile-toggle {
+      display: none !important;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: var(--logo-shadow);
+      flex-shrink: 0;
+    }
+
+    .logo-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    [data-theme="dark"] h1 {
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    /* Sheet URL input */
+    .sheet-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 12px;
+      min-width: 380px;
+      transition: border-color 0.2s;
+    }
+
+    .sheet-bar:focus-within {
+      border-color: var(--border-bright);
+    }
+
+    .sheet-bar svg {
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .sheet-bar input {
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      flex: 1;
+    }
+
+    .sheet-bar input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .btn-load {
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+      color: #0a0e1a;
+      border: none;
+      border-radius: 7px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s, transform 0.1s;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .btn-load:hover {
+      opacity: 0.9;
+    }
+
+    .btn-load:active {
+      transform: scale(0.97);
+    }
+
+    /* Status bar */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 2rem;
+      font-size: 12px;
+      color: var(--text-secondary);
+      min-height: 24px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .status-dot.live {
+      background: var(--accent-green);
+      box-shadow: 0 0 8px rgba(104, 211, 145, 0.6);
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.error {
+      background: #fc8181;
+    }
+
+    .status-dot.loading {
+      background: var(--accent-amber);
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
+    }
+
+    /* Search bar */
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 14px;
+      margin-bottom: 1.5rem;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .search-bar:focus-within {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 20px rgba(79, 209, 197, 0.15);
+    }
+
+    .search-bar input {
+      background: none;
+      border: none;
+      outline: none;
+      flex: 1;
+      color: var(--text-primary);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+    }
+
+    .search-bar input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-count {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* Progress bar */
+    .progress-wrap {
+      margin-bottom: 1.5rem;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .progress-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .progress-pct {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .progress-track {
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
+      background-size: 200% 100%;
+      animation: progressShine 2s ease infinite;
+    }
+
+    @keyframes progressShine {
+      0% {
+        background-position: 200% 0
+      }
+
+      100% {
+        background-position: -200% 0
+      }
+    }
+
+    /* ── Tree Layout ── */
+    .tree-wrapper {
+      display: flex;
+      gap: 0;
+      align-items: flex-start;
+    }
+
+    /* Level 1: Domains */
+    .domains-col {
+      width: 200px;
+      flex-shrink: 0;
+    }
+
+    .col-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      padding-left: 4px;
+    }
+
+    .domain-node {
+      position: relative;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+
+    .domain-btn {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      text-align: left;
+      font-family: 'Space Grotesk', sans-serif;
+      transform: translateX(0);
+    }
+
+    .domain-btn:hover {
+      transform: translateX(4px);
+    }
+
+    .domain-btn:hover {
+      border-color: var(--border-bright);
+      background: var(--surface2);
+    }
+
+    .domain-btn.active {
+      background: var(--surface2);
+      border-color: var(--node-color, var(--accent-blue));
+      box-shadow: 0 0 0 1px var(--node-color, var(--accent-blue)), var(--glow-blue);
+    }
+
+    .domain-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      background: color-mix(in srgb, var(--node-color, var(--accent-blue)) 20%, transparent);
+    }
+
+    .domain-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .domain-count {
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .domain-arrow {
+      margin-left: auto;
+      flex-shrink: 0;
+      color: var(--text-muted);
+      transition: transform 0.2s, color 0.2s;
+      font-size: 14px;
+    }
+
+    .domain-btn.active .domain-arrow {
+      transform: rotate(90deg);
+      color: var(--node-color, var(--accent-blue));
+    }
+
+    /* Connector lines */
+    .connector {
+      display: flex;
+      align-items: stretch;
+      position: relative;
+    }
+
+    .connector-line-v {
+      width: 30px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .v-line {
+      flex: 1;
+      width: 1px;
+      background: var(--border);
+    }
+
+    /* Level 2: Categories */
+    .categories-col {
+      flex: 0 0 220px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cat-panel {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .cat-panel.open {
+      max-height: 2000px;
+    }
+
+    .cat-node {
+      position: relative;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .h-connector {
+      width: 30px;
+      height: 24px;
+      flex-shrink: 0;
+      margin-top: 12px;
+      border-bottom: 1px solid var(--border);
+      border-left: 1px solid var(--border);
+      border-radius: 0 0 0 6px;
+    }
+
+    .cat-btn {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .cat-btn:hover {
+      border-color: var(--border-bright);
+      background: var(--surface3);
+    }
+
+    .cat-btn.active {
+      background: var(--surface3);
+      border-color: var(--node-color, var(--accent-cyan));
+      box-shadow: 0 0 0 1px var(--node-color, var(--accent-cyan));
+    }
+
+    .cat-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--node-color, var(--accent-cyan));
+      flex-shrink: 0;
+    }
+
+    .cat-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .cat-count {
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    .cat-arr {
+      margin-left: auto;
+      flex-shrink: 0;
+      color: var(--text-muted);
+      font-size: 12px;
+      transition: transform 0.2s;
+    }
+
+    .cat-btn.active .cat-arr {
+      transform: rotate(90deg);
+    }
+
+    /* Level 3: Topics */
+    .topics-col {
+      flex: 0 0 240px;
+    }
+
+    .topics-panel {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .topics-panel.open {
+      max-height: 2000px;
+    }
+
+    .topic-node {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+
+    .topic-btn {
+      flex: 1;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .topic-btn:hover {
+      border-color: var(--border-bright);
+      background: color-mix(in srgb, var(--node-color, var(--accent-green)) 8%, var(--surface3));
+    }
+
+    .topic-btn.active {
+      border-color: var(--node-color, var(--accent-green));
+      background: color-mix(in srgb, var(--node-color, var(--accent-green)) 12%, var(--surface3));
+      box-shadow: 0 0 0 1px var(--node-color, var(--accent-green));
+    }
+
+    .topic-sq {
+      width: 6px;
+      height: 6px;
+      background: var(--node-color, var(--accent-green));
+      border-radius: 2px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .topic-name {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-primary);
+      line-height: 1.35;
+    }
+
+    /* Content Panel */
+    .content-area {
+      flex: 1;
+      min-width: 0;
+      padding-left: 2rem;
+    }
+
+    .content-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      display: none;
+      animation: slideIn 0.3s ease;
+      position: sticky;
+      top: 2rem;
+    }
+
+    .content-panel.visible {
+      display: block;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .content-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .breadcrumb span {
+      color: var(--text-secondary);
+    }
+
+    .breadcrumb .sep {
+      color: var(--text-muted);
+    }
+
+    .content-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .domain-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 8px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+      border: 1px solid;
+    }
+
+    .content-body {
+      padding: 1.5rem;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .steps-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--surface2);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      position: relative;
+      animation: stepIn 0.4s ease both;
+    }
+
+    .step:hover {
+      border-color: var(--border-bright);
+      transform: translateX(4px);
+      background: var(--surface3);
+    }
+
+    .step.completed {
+      opacity: 0.6;
+    }
+
+    .step.completed .step-text {
+      text-decoration: line-through;
+    }
+
+    .step.completed::after {
+      content: '✓';
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--accent-green);
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    @keyframes stepIn {
+      from {
+        opacity: 0;
+        transform: translateX(-16px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .step:nth-child(1) {
+      animation-delay: 0.05s;
+    }
+
+    .step:nth-child(2) {
+      animation-delay: 0.1s;
+    }
+
+    .step:nth-child(3) {
+      animation-delay: 0.15s;
+    }
+
+    .step:nth-child(4) {
+      animation-delay: 0.2s;
+    }
+
+    .step:nth-child(5) {
+      animation-delay: 0.25s;
+    }
+
+    /* Confetti */
+    .confetti {
+      position: fixed;
+      top: -10px;
+      z-index: 9999;
+      pointer-events: none;
+      animation: confettiFall 2.5s ease-in forwards;
+    }
+
+    @keyframes confettiFall {
+      to {
+        top: 110vh;
+        opacity: 0;
+      }
+    }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface2);
+      border: 1px solid var(--accent-green);
+      color: var(--text-primary);
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 9999;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .step-text {
+      font-size: 13px;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .resource-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--accent-blue);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.2s;
+      margin-top: 4px;
+    }
+
+    .resource-link:hover {
+      border-color: var(--accent-blue);
+      background: rgba(99, 179, 237, 0.08);
+    }
+
+    .resource-link svg {
+      flex-shrink: 0;
+    }
+
+    /* Empty / loading states */
+    .placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      text-align: center;
+      color: var(--text-muted);
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+      gap: 16px;
+    }
+
+    .placeholder svg {
+      opacity: 0.4;
+    }
+
+    .placeholder p {
+      font-size: 13px;
+      max-width: 220px;
+      line-height: 1.6;
+    }
+
+    /* Stats strip */
+    .stats-strip {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .stat-chip {
+      padding: 8px 16px;
+      background: linear-gradient(135deg, var(--surface), var(--surface2));
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.3s;
+      cursor: default;
+      backdrop-filter: blur(8px);
+    }
+
+    .stat-chip:hover {
+      border-color: var(--border-bright);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .stat-chip strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* Keyboard shortcut hints */
+    .kbd {
+      display: inline-block;
+      padding: 1px 6px;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      margin-left: 6px;
+    }
+
+    /* Topic image */
+    .topic-image-wrap {
+      margin-top: 1.5rem;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+    }
+
+    .topic-image-wrap img {
+      width: 100%;
+      max-height: 360px;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s;
+    }
+
+    .topic-image-wrap:hover img {
+      transform: scale(1.02);
+    }
+
+    .topic-image-caption {
+      padding: 8px 14px;
+      font-size: 11px;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    /* All surfaces transition */
+    .domain-btn,
+    .cat-btn,
+    .topic-btn,
+    .content-panel,
+    .stat-chip,
+    .search-bar,
+    .sheet-bar,
+    .step,
+    .progress-track,
+    .resource-link,
+    .placeholder {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .tree-wrapper {
+        flex-direction: column;
+      }
+
+      .content-area {
+        padding-left: 0;
+        padding-top: 1.5rem;
+      }
+
+      .content-panel {
+        position: static;
+      }
+
+      .sheet-bar {
+        min-width: unset;
+        width: 100%;
+      }
+
+      .header-inner {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .header-brand {
+        width: 100%;
+      }
+
+      .header-actions {
+        width: 100%;
+        margin-top: 0.5rem;
+      }
+
+      .desktop-toggle {
+        display: none !important;
+      }
+
+      .mobile-toggle {
+        display: flex !important;
+      }
+
+      .logo h1 {
+        font-size: 1.3rem;
+      }
+
+      .logo-icon {
+        width: 44px;
+        height: 44px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .domains-col {
+        width: 100%;
+      }
+
+      .categories-col,
+      .topics-col {
+        flex: none;
+        width: 100%;
+      }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--surface3);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="particleCanvas"></canvas>
+  <div id="toast" class="toast"></div>
+  <div class="container">
+    <header>
+      <div class="header-inner">
+        <div class="header-brand">
+          <div class="logo">
+            <div class="logo-icon"><img src="assets/ndu-logo.png" alt="NIELIT Logo"
+                onerror="this.parentElement.innerHTML='🔬'"></div>
+            <div>
+              <h1>AIoT Learning Explorer</h1>
+              <div class="subtitle">NIELIT Ropar · Interactive knowledge tree</div>
+            </div>
+          </div>
+          <button class="theme-toggle mobile-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
+        </div>
+        <div class="header-actions">
+          <button class="theme-toggle desktop-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
+          <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
+            <div class="sheet-bar">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M3 9h18M9 21V9" />
+              </svg>
+              <input type="text" id="sheetUrl" placeholder="Paste Google Sheet URL or Sheet ID…" />
+              <button class="btn-load" onclick="loadFromSheet()">⚡ Load</button>
+            </div>
+            <div style="font-size:10px;color:var(--text-muted);padding-left:4px">
+              Make sheet public: Share → Anyone with link → Viewer
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="status-bar">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Using built-in dataset · Paste a Google Sheet URL above to sync live data</span>
+    </div>
+
+    <div class="stats-strip" id="statsStrip"></div>
+
+    <!-- Search -->
+    <div class="search-bar" id="searchBar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.35-4.35" />
+      </svg>
+      <input type="text" id="searchInput" placeholder="Search topics, categories, domains…" />
+      <span class="search-count" id="searchCount"></span>
+      <span class="kbd">/</span>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-header">
+        <span class="progress-label">Learning Progress</span>
+        <span class="progress-pct" id="progressPct">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="tree-wrapper" id="treeWrapper">
+      <!-- Domains column -->
+      <div class="domains-col">
+        <div class="col-label">Domains</div>
+        <div id="domainsList"></div>
+      </div>
+      <!-- Categories + Topics rendered dynamically next to selected domain -->
+      <div id="catTopicArea" style="display:flex;gap:0;flex:1;min-width:0;align-items:flex-start;"></div>
+      <!-- Content panel -->
+      <div class="content-area" id="contentArea">
+        <div class="placeholder" id="emptyState">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+            opacity="0.5">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+          <p>Select a topic from the tree to explore its learning content and resources</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BUILTIN = [
+      { Domain: "Auduino", Tabcat: "Light Emitting Diode - LED", Tab: "Interfacing LED with Arduino", Content: "1. Identify the longer leg (anode) and shorter leg (cathode) of the LED.\n2. Connect the LED and a resistor on the breadboard.\n3. Connect them to the Arduino.\n4. Write a simple program to make the LED blink.\n5. Change the delay time to see how fast it blinks!", Link: null, Pics: null },
+      { Domain: "Auduino", Tabcat: "Light Emitting Diode - LED", Tab: "Interfacing Multiple LEDs with Arduino", Content: "1. Connect 2 or more LEDs to the Arduino.\n2. Write code to blink them one by one or together.\n3. Try making fun patterns like a traffic light or running lights.\n4. Learn how to control multiple lights at the same time!", Link: null, Pics: null },
+      { Domain: "Auduino", Tabcat: "Button", Tab: "Button Interfacing with Arduino", Content: "1. Connect a push button to the Arduino.\n2. Learn how the button sends \"pressed\" (HIGH) or \"not pressed\" (LOW) signals.\n3. Write code to check if the button is pressed.\n4. See the button's status on your computer screen!", Link: "https://www.tinkercad.com/things/9Qrg0005zZ9-lcd-class", Pics: null },
+      { Domain: "Auduino", Tabcat: "LED Button", Tab: "LED Control Using Push Button", Content: "1. Connect both an LED and a push button to the Arduino.\n2. Write a program to turn the LED ON when you press the button.\n3. Make the LED turn OFF when you let go.\n4. Try making the button act like a switch to turn the LED on and off!", Link: null, Pics: null },
+      { Domain: "Auduino", Tabcat: "Project - LED Button", Tab: "Four LEDs Controlled by Two Buttons", Content: "1. Connect 4 LEDs and 2 push buttons.\n2. Program one button to make the lights move forward.\n3. Program the other button to make them move backward.\n4. Have fun creating different light patterns!", Link: null, Pics: null },
+      { Domain: "Auduino", Tabcat: "Buzzer", Tab: "Piezoelectric Buzzer Interfacing with Arduino", Content: "1. Connect a small speaker (buzzer) to the Arduino.\n2. Write code to make it play sounds.\n3. Change the numbers in the code to hear different pitches (high or low sounds).\n4. Try making it play a simple song or a warning beep!", Link: "https://www.tinkercad.com/things/9Qrg0005zZ9-lcd-class", Pics: null },
+      { Domain: "Auduino", Tabcat: "Liquid Crystal Display - LCD", Tab: "LCD Interfacing with Arduino", Content: "1. Connect a small screen (LCD) to the Arduino.\n2. Learn how to adjust the screen brightness.\n3. Write code to display your name or a fun message on the screen.\n4. See how screens show information!", Link: null, Pics: null },
+      { Domain: "Auduino", Tabcat: "Project LCD-Buzzer-Buttons", Tab: "LCD–Buzzer–Button Integrated Project", Content: "1. Connect an LCD screen, a buzzer, and 2 buttons.\n2. Use one button to make the sound higher and the other to make it lower.\n3. Show the sound level on the screen.\n4. Combine everything you've learned into one cool project!", Link: null, Pics: null },
+      { Domain: "Robo Car", Tabcat: "RoboCar Fundamentals", Tab: "Introduction to RoboCar Components", Content: "1. Look at all the parts for your RoboCar (motors, wheels, battery, etc.).\n2. Learn what each part does.\n3. Understand how the \"brain\" (Arduino) tells the wheels to move using a special helper (motor driver).", Link: null, Pics: null },
+      { Domain: "Robo Car", Tabcat: "DC Motor", Tab: "Understanding DC Motor Direction Control", Content: "1. Learn how a motor spins forward and backward.\n2. Change the wires to see the motor spin in the opposite direction.\n3. Understand how the Arduino sends signals to change the spin direction.", Link: "https://www.tinkercad.com/things/9Qrg0005zZ9-lcd-class", Pics: null },
+      { Domain: "Robo Car", Tabcat: "Motor Driver", Tab: "Interfacing Two DC Motors with L293D", Content: "1. Connect two motors to the motor driver helper.\n2. Test the left motor and the right motor.\n3. Test both motors at the same time.\n4. Learn how to control two wheels for your RoboCar!", Link: null, Pics: null },
+      { Domain: "Robo Car", Tabcat: "Basic RoboCar Movement", Tab: "Basic RoboCar Movement: Forward and Backward", Content: "1. Attach the motors and wheels to the RoboCar body.\n2. Write a program to make the car move forward and backward.\n3. Make sure both wheels spin the right way so the car goes straight.\n4. Watch your RoboCar drive!", Link: null, Pics: null }
+    ];
+
+    const DOMAIN_CONFIG = {
+      "Auduino": { color: "#3182ce", icon: "⚡", glow: "0 0 20px rgba(49,130,206,0.3)" },
+      "Robo Car": { color: "#38a169", icon: "🤖", glow: "0 0 20px rgba(56,161,105,0.3)" },
+      "AIoT": { color: "#805ad5", icon: "🔗", glow: "0 0 20px rgba(128,90,213,0.3)" },
+    };
+
+    function domainConfig(name) {
+      return DOMAIN_CONFIG[name] || { color: "#f6ad55", icon: "📡", glow: "0 0 20px rgba(246,173,85,0.3)" };
+    }
+
+    let data = [];
+    let state = { domain: null, cat: null, topic: null };
+    let completedSteps = JSON.parse(localStorage.getItem('aiot_completed') || '{}');
+
+    // ── Theme Toggle ──
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      html.setAttribute('data-theme', isDark ? '' : 'dark');
+      if (!isDark) html.setAttribute('data-theme', 'dark');
+      else html.removeAttribute('data-theme');
+      document.querySelectorAll('.theme-toggle').forEach(el => el.textContent = isDark ? '🌙' : '☀️');
+      localStorage.setItem('aiot_theme', isDark ? 'light' : 'dark');
+    }
+    // Load saved theme (default: light)
+    (function () {
+      const saved = localStorage.getItem('aiot_theme');
+      if (saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.querySelectorAll('.theme-toggle').forEach(el => el.textContent = '☀️');
+      }
+    })();
+
+    // ── Particle Background ──
+    (function initParticles() {
+      const canvas = document.getElementById('particleCanvas');
+      const ctx = canvas.getContext('2d');
+      let particles = [];
+      function resize() { canvas.width = innerWidth; canvas.height = innerHeight; }
+      resize(); window.addEventListener('resize', resize);
+      const colors = ['#63b3ed', '#4fd1c5', '#68d391', '#b794f4', '#f6ad55'];
+      for (let i = 0; i < 60; i++) {
+        particles.push({ x: Math.random() * innerWidth, y: Math.random() * innerHeight, r: Math.random() * 2 + 0.5, dx: (Math.random() - 0.5) * 0.4, dy: (Math.random() - 0.5) * 0.4, c: colors[i % colors.length] });
+      }
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const pOpacity = getComputedStyle(document.documentElement).getPropertyValue('--particle-opacity').trim() || 0.3;
+        particles.forEach((p, i) => {
+          p.x += p.dx; p.y += p.dy;
+          if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
+          if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fillStyle = p.c; ctx.globalAlpha = parseFloat(pOpacity); ctx.fill();
+          // Draw connections
+          for (let j = i + 1; j < particles.length; j++) {
+            const d = Math.hypot(p.x - particles[j].x, p.y - particles[j].y);
+            if (d < 120) { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(particles[j].x, particles[j].y); ctx.strokeStyle = p.c; ctx.globalAlpha = 0.06 * (1 - d / 120); ctx.stroke(); }
+          }
+        });
+        ctx.globalAlpha = 1;
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    // ── Toast / Confetti helpers ──
+    function showToast(msg) {
+      const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+    function spawnConfetti() {
+      const colors = ['#63b3ed', '#4fd1c5', '#68d391', '#b794f4', '#f687b3', '#f6ad55'];
+      for (let i = 0; i < 40; i++) {
+        const el = document.createElement('div'); el.className = 'confetti';
+        el.style.left = Math.random() * 100 + 'vw'; el.style.width = el.style.height = Math.random() * 8 + 4 + 'px';
+        el.style.background = colors[Math.floor(Math.random() * colors.length)];
+        el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        el.style.animationDuration = Math.random() * 1.5 + 1.5 + 's';
+        el.style.animationDelay = Math.random() * 0.5 + 's';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 4000);
+      }
+    }
+
+    // ── Progress tracking ──
+    function getStepKey(domain, cat, tab, stepIdx) { return `${domain}|${cat}|${tab}|${stepIdx}`; }
+    function saveProgress() { localStorage.setItem('aiot_completed', JSON.stringify(completedSteps)); updateProgress(); }
+    function updateProgress() {
+      const total = data.reduce((s, r) => s + (r.Content ? r.Content.split('\n').filter(l => l.trim()).length : 0), 0);
+      const done = Object.keys(completedSteps).length;
+      const pct = total ? Math.round(done / total * 100) : 0;
+      document.getElementById('progressPct').textContent = pct + '%';
+      document.getElementById('progressFill').style.width = pct + '%';
+    }
+
+    // ── Search ──
+    document.getElementById('searchInput').addEventListener('input', function () {
+      const q = this.value.toLowerCase().trim();
+      const countEl = document.getElementById('searchCount');
+      if (!q) { countEl.textContent = ''; render(); return; }
+      const matches = data.filter(r => (r.Domain + r.Tabcat + r.Tab + r.Content).toLowerCase().includes(q));
+      countEl.textContent = matches.length + ' found';
+      // Highlight matching domains
+      document.querySelectorAll('.domain-btn').forEach(btn => {
+        const name = btn.querySelector('.domain-name').textContent;
+        const domainMatches = matches.some(m => m.Domain === name);
+        btn.style.opacity = domainMatches ? '1' : '0.3';
+      });
+    });
+
+    // ── Keyboard shortcuts ──
+    document.addEventListener('keydown', e => {
+      if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+        e.preventDefault(); document.getElementById('searchInput').focus();
+      }
+      if (e.key === 'Escape') { document.getElementById('searchInput').value = ''; document.getElementById('searchInput').blur(); document.getElementById('searchCount').textContent = ''; render(); }
+    });
+
+    function setStatus(type, msg) {
+      const dot = document.getElementById('statusDot');
+      dot.className = 'status-dot ' + type;
+      document.getElementById('statusText').textContent = msg;
+    }
+
+    function extractSheetId(url) {
+      const m = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      return m ? m[1] : url.trim();
+    }
+
+    function buildCsvUrl(raw) {
+      // Already a published CSV URL (2PACX format)
+      if (raw.includes('2PACX') || (raw.includes('/pub') && raw.includes('output=csv'))) return raw;
+      // Published sheet URL without csv param
+      if (raw.includes('/pub')) return raw.includes('?') ? raw + '&output=csv' : raw + '?output=csv';
+      // Regular edit/view URL — extract ID and use export
+      const m = raw.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      if (m) return `https://docs.google.com/spreadsheets/d/${m[1]}/export?format=csv&gid=0`;
+      // Plain sheet ID
+      return `https://docs.google.com/spreadsheets/d/${raw.trim()}/export?format=csv&gid=0`;
+    }
+
+    async function loadFromSheet(urlOverride) {
+      const raw = urlOverride || document.getElementById('sheetUrl').value.trim();
+      if (!raw) return;
+      if (!urlOverride) document.getElementById('sheetUrl').value = raw;
+      setStatus('loading', 'Fetching from Google Sheets…');
+      const csvUrl = buildCsvUrl(raw);
+      try {
+        const res = await fetch(csvUrl);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const text = await res.text();
+        const rows = parseCSV(text);
+        if (rows.length < 2) throw new Error('No data rows found');
+        const headers = rows[0].map(h => h.trim());
+        const domainIdx = headers.findIndex(h => /domain/i.test(h));
+        const catIdx = headers.findIndex(h => /tabcat|category|cat/i.test(h));
+        const tabIdx = headers.findIndex(h => /^tab$|^topic/i.test(h));
+        const contentIdx = headers.findIndex(h => /content|practical/i.test(h));
+        const linkIdx = headers.findIndex(h => /^links?$|url/i.test(h));
+        const picsIdx = headers.findIndex(h => /^pics?$|^image|^photo|^picture/i.test(h));
+        if (domainIdx === -1 || catIdx === -1 || tabIdx === -1) throw new Error('Columns not found. Ensure headers: Domain, Tabcat, Tab, Practical Content, Links');
+        data = rows.slice(1).filter(r => r.some(c => c)).map(r => ({
+          Domain: r[domainIdx] || '',
+          Tabcat: r[catIdx] || '',
+          Tab: r[tabIdx] || '',
+          Content: contentIdx > -1 ? (r[contentIdx] || '') : '',
+          Link: linkIdx > -1 ? (r[linkIdx] || null) : null,
+          Pics: picsIdx > -1 ? (r[picsIdx] || null) : null
+        })).filter(r => r.Domain && r.Tab);
+        setStatus('live', `Live · ${data.length} topics loaded from Google Sheets · ${new Date().toLocaleTimeString()}`);
+        render();
+      } catch (e) {
+        setStatus('error', 'Error: ' + e.message + ' · Check sheet is public (Anyone with link → Viewer)');
+      }
+    }
+
+    function parseCSV(text) {
+      const rows = []; let row = []; let cell = ''; let inQ = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (inQ) { if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; } else if (c === '"') { inQ = false; } else { cell += c; } }
+        else if (c === '"') { inQ = true; }
+        else if (c === ',') { row.push(cell); cell = ''; }
+        else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+        else { cell += c; }
+      }
+      if (cell || row.length) { row.push(cell); rows.push(row); }
+      return rows;
+    }
+
+    function buildTree(rows) {
+      const tree = {};
+      rows.forEach(r => {
+        if (!r.Domain) return;
+        if (!tree[r.Domain]) tree[r.Domain] = {};
+        if (!tree[r.Domain][r.Tabcat]) tree[r.Domain][r.Tabcat] = [];
+        tree[r.Domain][r.Tabcat].push(r);
+      });
+      return tree;
+    }
+
+    function renderStats(tree) {
+      const domains = Object.keys(tree).length;
+      const cats = Object.values(tree).reduce((s, v) => s + Object.keys(v).length, 0);
+      const topics = data.length;
+      const strip = document.getElementById('statsStrip');
+      strip.innerHTML = `
+    <div class="stat-chip">🌐 <strong>${domains}</strong> Domains</div>
+    <div class="stat-chip">📂 <strong>${cats}</strong> Categories</div>
+    <div class="stat-chip">📄 <strong>${topics}</strong> Topics</div>
+    <div class="stat-chip">🔗 <strong>${data.filter(r => r.Link).length}</strong> Resources</div>
+  `;
+    }
+
+    function render() {
+      const tree = buildTree(data);
+      renderStats(tree);
+      const domainsList = document.getElementById('domainsList');
+      domainsList.innerHTML = '';
+      const catTopicArea = document.getElementById('catTopicArea');
+      catTopicArea.innerHTML = '';
+      document.getElementById('contentArea').innerHTML = `<div class="placeholder" id="emptyState"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg><p>Select a topic from the tree to explore its learning content and resources</p></div>`;
+      state = { domain: null, cat: null, topic: null };
+
+      Object.keys(tree).forEach(domain => {
+        const cfg = domainConfig(domain);
+        const cats = tree[domain];
+        const catNames = Object.keys(cats);
+        const topicCount = catNames.reduce((s, c) => s + cats[c].length, 0);
+
+        const btn = document.createElement('button');
+        btn.className = 'domain-btn';
+        btn.style.setProperty('--node-color', cfg.color);
+        btn.innerHTML = `
+      <div class="domain-icon" style="--node-color:${cfg.color}">${cfg.icon}</div>
+      <div>
+        <div class="domain-name">${domain}</div>
+        <div class="domain-count">${catNames.length} categories · ${topicCount} topics</div>
+      </div>
+      <span class="domain-arrow">›</span>
+    `;
+        btn.onclick = () => selectDomain(domain, btn, tree, cfg);
+        domainsList.appendChild(btn);
+      });
+    }
+
+    function selectDomain(domain, btn, tree, cfg) {
+      // Toggle
+      if (state.domain === domain) {
+        state.domain = null; state.cat = null; state.topic = null;
+        btn.classList.remove('active');
+        document.getElementById('catTopicArea').innerHTML = '';
+        document.getElementById('contentArea').innerHTML = `<div class="placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg><p>Select a topic to explore</p></div>`;
+        return;
+      }
+      document.querySelectorAll('.domain-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.domain = domain; state.cat = null; state.topic = null;
+
+      const catTopicArea = document.getElementById('catTopicArea');
+      catTopicArea.innerHTML = '';
+
+      // Categories column
+      const catsCol = document.createElement('div');
+      catsCol.className = 'categories-col';
+      catsCol.innerHTML = `<div class="col-label" style="padding-left:34px">Categories</div>`;
+
+      const cats = tree[domain];
+      Object.keys(cats).forEach(cat => {
+        const topics = cats[cat];
+        const row = document.createElement('div');
+        row.style.display = 'flex'; row.style.alignItems = 'flex-start';
+        row.innerHTML = `<div class="h-connector" style="border-color:${cfg.color}33;margin-top:14px"></div>`;
+        const catBtn = document.createElement('button');
+        catBtn.className = 'cat-btn';
+        catBtn.style.setProperty('--node-color', cfg.color);
+        catBtn.innerHTML = `
+      <div class="cat-dot" style="background:${cfg.color}"></div>
+      <div style="flex:1;min-width:0">
+        <div class="cat-name">${cat}</div>
+        <div class="cat-count">${topics.length} topic${topics.length > 1 ? 's' : ''}</div>
+      </div>
+      <span class="cat-arr">›</span>
+    `;
+        catBtn.onclick = () => selectCat(cat, catBtn, topics, cfg, domain);
+        row.appendChild(catBtn);
+        catsCol.appendChild(row);
+      });
+
+      catTopicArea.appendChild(catsCol);
+
+      // Topics column placeholder
+      const topicsColWrap = document.createElement('div');
+      topicsColWrap.id = 'topicsColWrap';
+      topicsColWrap.style.display = 'flex';
+      topicsColWrap.style.alignItems = 'flex-start';
+      catTopicArea.appendChild(topicsColWrap);
+    }
+
+    function selectCat(cat, catBtn, topics, cfg, domain) {
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      catBtn.classList.add('active');
+      state.cat = cat; state.topic = null;
+
+      const wrap = document.getElementById('topicsColWrap');
+      wrap.innerHTML = '';
+
+      const vLine = document.createElement('div');
+      vLine.style.cssText = `width:24px;flex-shrink:0;border-left:1px solid ${cfg.color}33;margin-left:12px;align-self:stretch;min-height:100px`;
+      wrap.appendChild(vLine);
+
+      const topicsCol = document.createElement('div');
+      topicsCol.className = 'topics-col';
+      topicsCol.innerHTML = `<div class="col-label" style="padding-left:28px">Topics</div>`;
+
+      topics.forEach(t => {
+        const row = document.createElement('div');
+        row.style.display = 'flex'; row.style.alignItems = 'flex-start';
+        row.innerHTML = `<div class="h-connector" style="border-color:${cfg.color}33;margin-top:12px;width:24px"></div>`;
+        const topBtn = document.createElement('button');
+        topBtn.className = 'topic-btn';
+        topBtn.style.setProperty('--node-color', cfg.color);
+        topBtn.innerHTML = `<div class="topic-sq" style="background:${cfg.color}"></div><div class="topic-name">${t.Tab}</div>`;
+        topBtn.onclick = () => { document.querySelectorAll('.topic-btn').forEach(b => b.classList.remove('active')); topBtn.classList.add('active'); showContent(t, domain, cat, cfg); };
+        row.appendChild(topBtn);
+        topicsCol.appendChild(row);
+      });
+
+      wrap.appendChild(topicsCol);
+    }
+
+    function showContent(topic, domain, cat, cfg) {
+      state.topic = topic.Tab;
+      const area = document.getElementById('contentArea');
+
+      const steps = topic.Content
+        ? topic.Content.split('\n').filter(s => s.trim())
+        : [];
+
+      const stepsHTML = steps.map((s, i) => {
+        const clean = s.replace(/^\d+\.\s*/, '');
+        const key = getStepKey(domain, cat, topic.Tab, i);
+        const done = completedSteps[key] ? ' completed' : '';
+        return `<li class="step${done}" data-key="${key}" onclick="toggleStep(this,'${key}','${domain}','${cat}','${topic.Tab}',${steps.length})">
+      <div class="step-num" style="background:${cfg.color}22;color:${cfg.color}">${String(i + 1).padStart(2, '0')}</div>
+      <div class="step-text">${clean}</div>
+    </li>`;
+      }).join('');
+
+      // Count completed for this topic
+      const doneCount = steps.filter((_, i) => completedSteps[getStepKey(domain, cat, topic.Tab, i)]).length;
+      const topicPct = steps.length ? Math.round(doneCount / steps.length * 100) : 0;
+
+      const linkHTML = topic.Link && topic.Link !== 'NaN' ? `
+    <div style="margin-top:1.5rem">
+      <div class="section-label">🔗 Learning Resource</div>
+      <a href="${topic.Link}" target="_blank" rel="noopener" class="resource-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Open in TinkerCAD / Simulator
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  ` : '';
+
+      const picsHTML = topic.Pics && topic.Pics !== 'NaN' ? `
+    <div class="topic-image-wrap">
+      <img src="${topic.Pics}" alt="Reference image for ${topic.Tab}" onerror="this.parentElement.style.display='none'">
+    </div>
+  ` : '';
+
+      area.innerHTML = `
+    <div class="content-panel visible">
+      <div class="content-header">
+        <div class="breadcrumb">
+          <span>${domain}</span>
+          <span class="sep">›</span>
+          <span>${cat}</span>
+          <span class="sep">›</span>
+          <span style="color:var(--text-primary)">${topic.Tab}</span>
+        </div>
+        <div class="content-title">${topic.Tab}</div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px">
+          <div class="domain-badge" style="color:${cfg.color};border-color:${cfg.color}44;background:${cfg.color}11">
+            ${cfg.icon} ${domain}
+          </div>
+          <div style="font-size:11px;color:var(--text-secondary)">
+            ✅ ${doneCount}/${steps.length} steps · ${topicPct}% complete
+          </div>
+        </div>
+      </div>
+      <div class="content-body">
+        ${picsHTML}
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;margin-top:${picsHTML ? '1.5rem' : '0'}">
+          ${steps.length ? `<div class="section-label" style="margin-bottom:0">🛠 Hands-on Steps <span style="font-size:9px;text-transform:none;letter-spacing:0;color:var(--text-muted)">(click to complete)</span></div>` : ''}
+        </div>
+        ${steps.length ? `<ul class="steps-list">${stepsHTML}</ul>` : '<p style="color:var(--text-muted);font-size:13px">No content available for this topic yet.</p>'}
+        ${linkHTML}
+      </div>
+    </div>
+  `;
+    }
+
+    function toggleStep(el, key, domain, cat, tab, totalSteps) {
+      if (completedSteps[key]) { delete completedSteps[key]; el.classList.remove('completed'); }
+      else { completedSteps[key] = true; el.classList.add('completed'); }
+      saveProgress();
+      // Update topic header count
+      const doneCount = Array.from({ length: totalSteps }, (_, i) => getStepKey(domain, cat, tab, i)).filter(k => completedSteps[k]).length;
+      if (doneCount === totalSteps && totalSteps > 0) {
+        spawnConfetti(); showToast('🎉 Topic completed! Great job!');
+      } else if (completedSteps[key]) {
+        showToast('✅ Step marked complete');
+      }
+    }
+
+    const LIVE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQMrRSRnpZ2s7TOkx34Vk2kI-uEKG0xr8-J8ftekz7c2S4cFaT7a_d6ig1Kx7M5FvC2rgGKzPTJaZjW/pub?output=csv';
+    document.getElementById('sheetUrl').value = LIVE_URL;
+    data = BUILTIN;
+    render();
+    updateProgress();
+    setStatus('loading', 'Auto-loading your live Google Sheet…');
+    loadFromSheet(LIVE_URL);
+  </script>
+</body>
+
+</html>
