@@ -1107,10 +1107,23 @@
         width: 100%;
       }
 
-      .categories-col,
-      .topics-col {
+      #catTopicArea {
+        flex-direction: column;
+      }
+
+      .categories-col {
         flex: none;
         width: 100%;
+      }
+
+      #topicsColWrap {
+        width: 100%;
+        margin-top: 10px;
+      }
+
+      .topics-col {
+        flex: 1;
+        width: auto;
       }
     }
 
@@ -1391,6 +1404,8 @@
         const contentIdx = headers.findIndex(h => /content|practical/i.test(h));
         const linkIdx = headers.findIndex(h => /^links?$|url/i.test(h));
         const picsIdx = headers.findIndex(h => /^pics?$|^image|^photo|^picture/i.test(h));
+        const refIdx = headers.findIndex(h => /reference|ref/i.test(h));
+        const ytIdx = headers.findIndex(h => /youtube|yt|video/i.test(h));
         if (domainIdx === -1 || catIdx === -1 || tabIdx === -1) throw new Error('Columns not found. Ensure headers: Domain, Tabcat, Tab, Practical Content, Links');
         data = rows.slice(1).filter(r => r.some(c => c)).map(r => ({
           Domain: r[domainIdx] || '',
@@ -1398,7 +1413,9 @@
           Tab: r[tabIdx] || '',
           Content: contentIdx > -1 ? (r[contentIdx] || '') : '',
           Link: linkIdx > -1 ? (r[linkIdx] || null) : null,
-          Pics: picsIdx > -1 ? (r[picsIdx] || null) : null
+          Pics: picsIdx > -1 ? (r[picsIdx] || null) : null,
+          Reference: refIdx > -1 ? (r[refIdx] || null) : null,
+          Youtube: ytIdx > -1 ? (r[ytIdx] || null) : null
         })).filter(r => r.Domain && r.Tab);
         setStatus('live', `Live · ${data.length} topics loaded from Google Sheets · ${new Date().toLocaleTimeString()}`);
         render();
@@ -1601,6 +1618,50 @@
     </div>
   ` : '';
 
+      let refHTML = '';
+      if (topic.Reference && topic.Reference !== 'NaN') {
+        const refs = topic.Reference.split(/\n|,/).map(r => r.trim()).filter(r => r);
+        const refLinks = refs.map(r => {
+          if (r.startsWith('http')) {
+            try {
+              return `<a href="${r}" target="_blank" rel="noopener" class="resource-link" style="margin-top:0;display:inline-flex;max-width:max-content;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                ${new URL(r).hostname.replace('www.', '')}
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left:8px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </a>`;
+            } catch (e) {
+              return `<div style="font-size:12px;color:var(--text-secondary);padding:4px 0">${r}</div>`;
+            }
+          }
+          return `<div style="font-size:12px;color:var(--text-secondary);padding:4px 0">${r}</div>`;
+        }).join('');
+
+        refHTML = `
+          <div style="margin-top:1.5rem">
+            <div class="section-label">📚 References</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              ${refLinks}
+            </div>
+          </div>
+        `;
+      }
+
+      let ytHTML = '';
+      if (topic.Youtube && topic.Youtube !== 'NaN') {
+        const ytMatch = topic.Youtube.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^"&?\/\s]{11})/);
+        if (ytMatch && ytMatch[1]) {
+          const videoId = ytMatch[1];
+          ytHTML = `
+            <div style="margin-top:1.5rem">
+              <div class="section-label">🎥 Video Tutorial</div>
+              <div style="position: relative; padding-bottom: 56.25%; height: 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: var(--surface2);">
+                <iframe src="https://www.youtube.com/embed/${videoId}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+              </div>
+            </div>
+          `;
+        }
+      }
+
       area.innerHTML = `
     <div class="content-panel visible">
       <div class="content-header">
@@ -1628,6 +1689,8 @@
         </div>
         ${steps.length ? `<ul class="steps-list">${stepsHTML}</ul>` : '<p style="color:var(--text-muted);font-size:13px">No content available for this topic yet.</p>'}
         ${linkHTML}
+        ${ytHTML}
+        ${refHTML}
       </div>
     </div>
   `;
