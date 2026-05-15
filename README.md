@@ -74,6 +74,3 @@ Your dataset (like the provided `AIOT PROJECT.csv`) must contain the following h
 
 This project is developed under the **National Institute of Electronics & Information Technology (NIELIT), Ropar** to foster accessible, structured, and interactive education in the rapidly growing field of AIoT and Embedded Systems.
 
-```
-
-```
